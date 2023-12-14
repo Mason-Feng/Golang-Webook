@@ -1,0 +1,24 @@
+#如何解释这一份配置，或者说怎么处理这一份配置
+apiVersion: apps/v1
+#声明这里配置的是Deployment
+kind: Deployment
+metadata:
+  name: webook-service
+spec:
+  replicas: 2 #三个副本
+  selector:
+    matchLabels:
+      app: webook
+  template:
+    metadata:
+      labels:
+        #这里webook一定要和前面的selector的matchLabels匹配上
+        app: webook
+
+    spec:
+      #Pod里面运行的所有的container
+      containers:
+        - name: webook
+          image: fqw/webook:v0.0.1
+          ports:
+            - containerPort: 8081

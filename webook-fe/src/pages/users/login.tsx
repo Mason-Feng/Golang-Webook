@@ -9,10 +9,15 @@ const onFinish = (values: any) => {
         .then((res) => {
             if(res.status != 200) {
                 alert(res.statusText);
-                return
+                return;
             }
+
             alert(res.data)
-            router.push('/articles/list')
+
+            router.push('/users/profile')
+
+
+
         }).catch((err) => {
             alert(err);
     })

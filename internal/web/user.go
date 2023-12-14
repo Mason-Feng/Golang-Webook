@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	//"github.com/jinzhu/now"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"time"
 	"webook/internal/domain"
@@ -15,6 +16,8 @@ const (
 	emailRegexPattern    = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$"
 	passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
 )
+
+var JWTKey = []byte("RrRqvf7sVUhBwm0hTl9Umu1vu1unNkp6")
 
 type UserHandler struct {
 	emailRexExp     *regexp.Regexp
@@ -30,10 +33,17 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 	}
 }
 
+type UsersClaims struct {
+	jwt.RegisteredClaims
+	Uid       int64
+	UserAgent string
+}
+
 func (c *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
 	ug.POST("/signup", c.SignUp)
-	ug.POST("/login", c.Login)
+	//ug.POST("/login", c.Login)
+	ug.POST("/login", c.LoginJWT)
 	ug.POST("/edit", c.Edit)
 	ug.GET("/profile", c.Profile)
 }
@@ -98,9 +108,8 @@ func (c *UserHandler) SignUp(ctx *gin.Context) {
 }
 func (c *UserHandler) Login(ctx *gin.Context) {
 	type Req struct {
-		Email           string `json:"email"`
-		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirmPassword"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	var req Req
 	if err := ctx.Bind(&req); err != nil {
@@ -113,11 +122,11 @@ func (c *UserHandler) Login(ctx *gin.Context) {
 		sess.Set("userId", u.Id)
 		sess.Options(sessions.Options{
 			//十五分钟
-			MaxAge: 900,
+			MaxAge: 30,
 		})
 		err = sess.Save()
 		if err != nil {
-			ctx.String(http.StatusOK, "系统错误")
+			ctx.String(http.StatusOK, "sesion存储错误")
 			return
 		}
 
@@ -129,6 +138,55 @@ func (c *UserHandler) Login(ctx *gin.Context) {
 
 	}
 
+}
+
+func (c *UserHandler) LoginJWT(ctx *gin.Context) {
+	type Req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req Req
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	u, err := c.svc.Login(ctx, req.Email, req.Password)
+	switch err {
+	case nil:
+		uc := UsersClaims{
+			Uid:       u.Id,
+			UserAgent: ctx.GetHeader("User-Agent"),
+			RegisteredClaims: jwt.RegisteredClaims{
+				//30分钟过期
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
+			},
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS512, uc)
+		tokenStr, err := token.SignedString(JWTKey)
+		if err != nil {
+
+			ctx.String(http.StatusOK, "tokensStr系统错误")
+
+		}
+		ctx.Header("x-jwt-token", tokenStr)
+		ctx.String(http.StatusOK, "登录成功")
+		//sess := sessions.Default(ctx)
+		//sess.Set("userId", u.Id)
+		//sess.Options(sessions.Options{
+		//	//十五分钟
+		//	MaxAge: 30,
+		//})
+		//err = sess.Save()
+		//if err != nil {
+		//	ctx.String(http.StatusOK, "sesion存储错误")
+		//	return
+		//}
+
+	case service.ErrInvalidUserOrPassword:
+		ctx.String(http.StatusOK, "用户名或者密码不对")
+	default:
+		ctx.String(http.StatusOK, "系统错误")
+
+	}
 }
 func (c *UserHandler) Edit(ctx *gin.Context) {
 	type Req struct {
@@ -168,28 +226,30 @@ func (c *UserHandler) Edit(ctx *gin.Context) {
 
 }
 func (c *UserHandler) Profile(ctx *gin.Context) {
+	//us :=ctx.MustGet("user").(UsersClaims)
 
-	sess := sessions.Default(ctx)
-	uc := sess.Get("userId")
+	//sess := sessions.Default(ctx)
+	//uc := sess.Get("userId")
+	//
+	//u, err := c.svc.FindById(ctx, uc.(int64))
+	//if err != nil {
+	//	ctx.String(http.StatusOK, "系统错误")
+	//	return
+	//}
 
-	u, err := c.svc.FindById(ctx, uc.(int64))
-	if err != nil {
-		ctx.String(http.StatusOK, "系统错误")
-		return
-	}
-
-	type User struct {
-		Nickname string `json:"nickname"`
-		Email    string `json:"email"`
-		AboutMe  string `json:"aboutme"`
-		Birthday string `json:"birthday"`
-	}
-
-	ctx.JSON(http.StatusOK, User{
-		Nickname: u.Nickname,
-		Email:    u.Email,
-		AboutMe:  u.AboutMe,
-		Birthday: u.Brithday,
-	})
+	//type User struct {
+	//	Nickname string `json:"nickname"`
+	//	Email    string `json:"email"`
+	//	AboutMe  string `json:"aboutme"`
+	//	Birthday string `json:"birthday"`
+	//}
+	//
+	//ctx.JSON(http.StatusOK, User{
+	//	Nickname: u.Nickname,
+	//	Email:    u.Email,
+	//	AboutMe:  u.AboutMe,
+	//	Birthday: u.Brithday,
+	//})
+	ctx.String(http.StatusOK, "这是Profile")
 
 }
