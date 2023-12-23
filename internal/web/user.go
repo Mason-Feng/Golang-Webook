@@ -45,7 +45,7 @@ func (c *UserHandler) RegisterRoutes(server *gin.Engine) {
 	//ug.POST("/login", c.Login)
 	ug.POST("/login", c.LoginJWT)
 	ug.POST("/edit", c.Edit)
-	ug.GET("/profile", c.Profile)
+	ug.GET("/profile", c.ProfileJWT)
 }
 
 func (c *UserHandler) SignUp(ctx *gin.Context) {
@@ -157,7 +157,7 @@ func (c *UserHandler) LoginJWT(ctx *gin.Context) {
 			UserAgent: ctx.GetHeader("User-Agent"),
 			RegisteredClaims: jwt.RegisteredClaims{
 				//30分钟过期
-				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 			},
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodHS512, uc)
@@ -198,6 +198,13 @@ func (c *UserHandler) Edit(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
+	if req.Nickname == "" {
+		ctx.String(http.StatusOK, "昵称不能为空")
+	}
+	if len(req.AboutMe) > 1024 {
+		ctx.String(http.StatusOK, "关于我过长")
+	}
+
 	sess := sessions.Default(ctx)
 
 	uc := sess.Get("userId")
@@ -225,6 +232,28 @@ func (c *UserHandler) Edit(ctx *gin.Context) {
 	}
 
 }
+
+func (c *UserHandler) ProfileJWT(ctx *gin.Context) {
+	type Profile struct {
+		Email    string
+		Nickname string
+		Birthday string
+		AboutMe  string
+	}
+
+	uc := ctx.MustGet("user").(UsersClaims)
+	u, err := c.svc.Profile(ctx, uc.Uid)
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+	ctx.JSON(http.StatusOK, Profile{
+		Nickname: u.Nickname,
+		Email:    u.Email,
+		AboutMe:  u.AboutMe,
+		Birthday: u.Brithday,
+	})
+}
 func (c *UserHandler) Profile(ctx *gin.Context) {
 	//us :=ctx.MustGet("user").(UsersClaims)
 
@@ -237,12 +266,12 @@ func (c *UserHandler) Profile(ctx *gin.Context) {
 	//	return
 	//}
 
-	//type User struct {
-	//	Nickname string `json:"nickname"`
-	//	Email    string `json:"email"`
-	//	AboutMe  string `json:"aboutme"`
-	//	Birthday string `json:"birthday"`
-	//}
+	type User struct {
+		Nickname string `json:"nickname"`
+		Email    string `json:"email"`
+		AboutMe  string `json:"aboutme"`
+		Birthday string `json:"birthday"`
+	}
 	//
 	//ctx.JSON(http.StatusOK, User{
 	//	Nickname: u.Nickname,
@@ -250,6 +279,21 @@ func (c *UserHandler) Profile(ctx *gin.Context) {
 	//	AboutMe:  u.AboutMe,
 	//	Birthday: u.Brithday,
 	//})
+	//type Profile struct {
+	//	Email string
+	//}
+	sess := sessions.Default(ctx)
+	id := sess.Get("userId").(int64)
+	u, err := c.svc.Profile(ctx, id)
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+	}
 	ctx.String(http.StatusOK, "这是Profile")
+	ctx.JSON(http.StatusOK, User{
+		Nickname: u.Nickname,
+		Email:    u.Email,
+		AboutMe:  u.AboutMe,
+		Birthday: u.Brithday,
+	})
 
 }

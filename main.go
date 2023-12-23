@@ -9,7 +9,6 @@ import (
 
 	//"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"time"
@@ -18,15 +17,14 @@ import (
 	"webook/internal/service"
 	"webook/internal/web"
 	"webook/internal/web/middleware"
-	"webook/pkg/ginx/middleware/ratelimit"
 )
 
 func main() {
-	//db := initDB()
-	//server := initWeebServer()
-	//
-	//initUserHdl(db, server)
-	server := gin.Default()
+	db := initDB()
+	server := initWebServer()
+
+	initUserHdl(db, server)
+	//server := gin.Default()
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "hello,启动成功了！")
 	})
@@ -56,13 +54,13 @@ func initDB() *gorm.DB {
 
 }
 
-func initWeebServer() *gin.Engine {
+func initWebServer() *gin.Engine {
 	server := gin.Default()
 
 	server.Use(cors.New(cors.Config{
 
 		AllowCredentials: true,
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Content-Type", "Authorization", "User-Agent"},
 		//允许前端访问后端响应中带的头部
 		ExposeHeaders: []string{"x-jwt-token"},
 		AllowOriginFunc: func(origin string) bool {
@@ -82,10 +80,10 @@ func initWeebServer() *gin.Engine {
 		println("这是我的Middleware")
 	})
 	//限流
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: config.Config.Redis.Addr,
-	})
-	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 1).Build())
+	//redisClient := redis.NewClient(&redis.Options{
+	//	Addr: config.Config.Redis.Addr,
+	//})
+	//server.Use(ratelimit.NewBuilder(redisClient, time.Second, 1).Build())
 
 	useJWT(server)
 	return server
