@@ -2,9 +2,11 @@ package dao
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"github.com/go-sql-driver/mysql"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
 
 	"gorm.io/gorm"
 )
@@ -16,6 +18,21 @@ var (
 
 type UserDAO struct {
 	db *gorm.DB
+}
+
+type User struct {
+	Id int64 `gorm:"primaryKey,autoIncrement"`
+	//带有sql.NullString标签的列表示这是一个可以为NULL的列
+	Email sql.NullString `gorm:"unique"`
+	Phone sql.NullString `gorm:"unique"`
+
+	Password string
+	Nickname string `gorm:"type=varchar(128)"`
+	Brithday string
+	AboutMe  string `gorm:"type=varchar(4096)"`
+	Ctime    int64  // 创建时间,时区 UTC 0毫秒数
+	Utime    int64  // 更新时间
+
 }
 
 func NewUserDAO(db *gorm.DB) *UserDAO {
@@ -78,14 +95,8 @@ func (dao *UserDAO) FindById(ctx context.Context, userId int64) (User, error) {
 	return u, err
 }
 
-type User struct {
-	Id       int64  `gorm:"primaryKey，autoIncrement"`
-	Email    string `gorm:"unique"`
-	Password string
-	Nickname string `gorm:"type=varchar(128)"`
-	Brithday string
-	AboutMe  string `gorm:"type=varchar(4096)"`
-	Ctime    int64  // 创建时间,时区 UTC 0毫秒数
-	Utime    int64  // 更新时间
-
+func (dao *UserDAO) FindByPhone(ctx context.Context, phone string) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("Phone=?", phone).First(&u).Error
+	return u, err
 }

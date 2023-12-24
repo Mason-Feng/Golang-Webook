@@ -10,13 +10,13 @@ import (
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 )
 
-type Service struct {
+type SMSService struct {
 	client   *sms.Client
 	appId    *string
 	SignName *string
 }
 
-func (s *Service) Send(ctx context.Context, tplId string, args []string, numbers ...string) error {
+func (s *SMSService) Send(ctx context.Context, tplId string, args []string, numbers ...string) error {
 	request := sms.NewSendSmsRequest()
 	request.SetContext(ctx)
 	request.SmsSdkAppId = s.appId
@@ -43,14 +43,14 @@ func (s *Service) Send(ctx context.Context, tplId string, args []string, numbers
 	return nil
 
 }
-func (s *Service) toPtrSlice(data []string) []*string {
+func (s *SMSService) toPtrSlice(data []string) []*string {
 	return slice.Map[string, *string](data, func(idx int, src string) *string {
 		return &src
 	})
 }
 
-func NewService(client *sms.Client, appId string, SignName string) *Service {
-	return &Service{
+func NewService(client *sms.Client, appId string, SignName string) *SMSService {
+	return &SMSService{
 		client:   client,
 		appId:    &appId,
 		SignName: &SignName,
