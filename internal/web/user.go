@@ -23,18 +23,18 @@ const (
 var JWTKey = []byte("RrRqvf7sVUhBwm0hTl9Umu1vu1unNkp6")
 
 type UserHandler struct {
-	emailRexExp     *regexp.Regexp
-	passworedRexExp *regexp.Regexp
-	svc             *service.UserService
-	codeSvc         *service.CodeService
+	emailRexExp    *regexp.Regexp
+	passwordRexExp *regexp.Regexp
+	svc            service.UserService
+	codeSvc        service.CodeService
 }
 
-func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
 	return &UserHandler{
-		emailRexExp:     regexp.MustCompile(emailRegexPattern, regexp.None),
-		passworedRexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
-		svc:             svc,
-		codeSvc:         codeSvc,
+		emailRexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
+		passwordRexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
+		svc:            svc,
+		codeSvc:        codeSvc,
 	}
 }
 
@@ -168,7 +168,7 @@ func (c *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	//校验密码
-	isPassword, err := c.passworedRexExp.MatchString(req.Password)
+	isPassword, err := c.passwordRexExp.MatchString(req.Password)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return
@@ -329,7 +329,7 @@ func (c *UserHandler) Edit(ctx *gin.Context) {
 	err = c.svc.UpdateNonSensitiveInfo(ctx, domain.User{
 		Id:       uc.(int64),
 		Nickname: req.Nickname,
-		Brithday: birthday.String(),
+		Birthday: birthday.String(),
 		AboutMe:  req.AboutMe,
 	})
 
@@ -361,7 +361,7 @@ func (c *UserHandler) ProfileJWT(ctx *gin.Context) {
 		Nickname: u.Nickname,
 		Email:    u.Email,
 		AboutMe:  u.AboutMe,
-		Birthday: u.Brithday,
+		Birthday: u.Birthday,
 	})
 }
 func (c *UserHandler) Profile(ctx *gin.Context) {
@@ -403,7 +403,7 @@ func (c *UserHandler) Profile(ctx *gin.Context) {
 		Nickname: u.Nickname,
 		Email:    u.Email,
 		AboutMe:  u.AboutMe,
-		Birthday: u.Brithday,
+		Birthday: u.Birthday,
 	})
 
 }
