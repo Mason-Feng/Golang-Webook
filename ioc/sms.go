@@ -11,6 +11,7 @@ import (
 )
 
 func InitSMSService() sms.SMSService {
+	//return ratelimit.NewRateLimitSMSService(localsms.NewService(),limiter.NewRdeisSlidingWindowLimiter())
 	return localsms.NewService()
 	//如果有需要腾讯的，就可以初始化
 	//return initTencentSMSService()
