@@ -106,7 +106,7 @@ func TestRedisCodeCache_Set_e2e(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.before(t)
 			defer tc.after(t)
-			c := cache.NewCodeCache(rdb)
+			c := cache.NewRedisCodeCache(rdb)
 			err := c.Set(tc.ctx, tc.biz, tc.phone, tc.code)
 			assert.Equal(t, tc.wantErr, err)
 		})
