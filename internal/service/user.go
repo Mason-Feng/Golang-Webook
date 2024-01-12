@@ -21,7 +21,32 @@ type UserService interface {
 	UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error
 	Profile(ctx context.Context, userId int64) (domain.User, error)
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
+	FindOrCreateByWechat(ctx context.Context, wechatInfo domain.WechatInfo) (domain.User, error)
 }
+
+func (svc *userService) FindOrCreateByWechat(ctx context.Context, wechatInfo domain.WechatInfo) (domain.User, error) {
+	u, err := svc.repo.FindByWechat(ctx, wechatInfo.OpenId)
+	if err != repository.ErrUserNotFound {
+		//有两种情况
+		//err==nil，u是可用的
+		//err!=nil，系统错误
+		return u, err
+	}
+	//用户没找到，进行注册
+	err = svc.repo.Create(ctx, domain.User{
+		WechatInfo: wechatInfo,
+	})
+	//有两种可能，一种是err恰好是唯一索引冲突（phone)，
+	//一种是err!=nil,系统错误
+	if err != nil && err != repository.ErrDuplicateUser {
+		return domain.User{}, err
+	}
+
+	//要么err==nil，要么ErrDuplicateUser也代表用户存在
+	//这里会出现主从延迟，理论上讲，强制走主库
+	return svc.repo.FindByWechat(ctx, wechatInfo.OpenId)
+}
+
 type userService struct {
 	repo repository.UserRepository
 }

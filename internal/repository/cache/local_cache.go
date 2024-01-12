@@ -15,7 +15,7 @@ type LocalCache struct {
 	lc *cache.Cache
 }
 
-func NewLocalCache(expiration time.Duration, cleanupinterval time.Duration) *LocalCache {
+func NewLocalCache(expiration time.Duration, cleanupinterval time.Duration) CodeLocalCache {
 
 	return &LocalCache{
 		lc: cache.New(expiration, cleanupinterval),
