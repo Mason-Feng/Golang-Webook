@@ -6,6 +6,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"time"
 	"webook/internal/web"
+	ijwt "webook/internal/web/jwt"
+
 	"webook/internal/web/middleware"
 	"webook/pkg/ginx/middleware/ratelimit"
 	"webook/pkg/limiter"
@@ -18,13 +20,13 @@ func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler, wechatHdl *
 	wechatHdl.RegisterRoutes(server)
 	return server
 }
-func InitGinMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
+func InitGinMiddlewares(redisClient redis.Cmdable, hdl ijwt.Handler) []gin.HandlerFunc {
 	return []gin.HandlerFunc{cors.New(cors.Config{
 
 		AllowCredentials: true,
 		AllowHeaders:     []string{"Content-Type", "Authorization", "User-Agent"},
 		//允许前端访问后端响应中带的头部
-		ExposeHeaders: []string{"x-jwt-token"},
+		ExposeHeaders: []string{"x-jwt-token", "x-refresh-token"},
 		AllowOriginFunc: func(origin string) bool {
 			return true
 		},
@@ -43,6 +45,6 @@ func InitGinMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
 			println("这是我的Middleware")
 		},
 		ratelimit.NewBuilder(limiter.NewRdeisSlidingWindowLimiter(redisClient, time.Second, 1000)).Build(),
-		(&middleware.LoginJWTMiddlewareBuilder{}).CheckLogin(),
+		middleware.NewLoginJWTMiddlewareBuilder(hdl).CheckLogin(),
 	}
 }
