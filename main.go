@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"time"
@@ -31,6 +32,13 @@ func main() {
 	})
 
 	server.Run(":8080")
+}
+func initLogger() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(logger)
 }
 func initViperWatch() {
 	cfile := pflag.String("config", "config/dev.yaml", "配置文件路径")

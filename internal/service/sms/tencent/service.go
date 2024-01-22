@@ -3,6 +3,7 @@ package tencent
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/ecodeclub/ekit"
 	"github.com/ecodeclub/ekit/slice"
@@ -25,6 +26,7 @@ func (s *SMSService) Send(ctx context.Context, tplId string, args []string, numb
 	request.TemplateParamSet = s.toPtrSlice(args)
 	request.PhoneNumberSet = s.toPtrSlice(numbers)
 	response, err := s.client.SendSms(request)
+	zap.L().Debug("请求腾讯SendSMS接口", zap.Any("req", request), zap.Any("resp", response))
 	// 处理异常
 	if err != nil {
 

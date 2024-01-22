@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -33,6 +34,7 @@ func (svc *userService) FindOrCreateByWechat(ctx context.Context, wechatInfo dom
 		return u, err
 	}
 	//用户没找到，进行注册
+	zap.L().Info("新用户", zap.Any("wechatInfo", wechatInfo)) //会输出jason格式的wechatinfo
 	err = svc.repo.Create(ctx, domain.User{
 		WechatInfo: wechatInfo,
 	})

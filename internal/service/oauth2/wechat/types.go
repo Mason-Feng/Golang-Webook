@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"webook/internal/domain"
+	"webook/pkg/logger"
 )
 
 type OAuth2Service interface {
@@ -20,6 +21,7 @@ type OAuth2WechatService struct {
 	appID     string
 	appSecret string
 	client    *http.Client
+	logger    logger.LoggerV1
 }
 
 type Result struct {
@@ -36,11 +38,12 @@ type Result struct {
 	ErrMsg  string `json:"errmsg"`
 }
 
-func NewOAuth2WechatService(appID string, appSecret string) OAuth2Service {
+func NewOAuth2WechatService(appID string, appSecret string, logger logger.LoggerV1) OAuth2Service {
 	return &OAuth2WechatService{
 		appID:     appID,
 		appSecret: appSecret,
 		client:    http.DefaultClient,
+		logger:    logger,
 	}
 }
 

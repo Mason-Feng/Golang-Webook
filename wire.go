@@ -20,6 +20,7 @@ func InitWebServer() *gin.Engine {
 		//由下至上的顺序
 		//第三方依赖
 		ioc.InitRedis, ioc.InitDB,
+		ioc.InitLogger,
 
 		//DAO部分
 		dao.NewUserDAO,
@@ -38,8 +39,8 @@ func InitWebServer() *gin.Engine {
 
 		//handler部分
 		web.NewUserHandler,
-		web.NewOAuth2WechatHandler,
 		ijwt.NewRedisJWTHandler,
+		web.NewOAuth2WechatHandler,
 		ioc.InitGinMiddlewares,
 		ioc.InitWebServer,
 	)

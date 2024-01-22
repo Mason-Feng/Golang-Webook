@@ -21,7 +21,7 @@ type RedisJWTHandler struct {
 	rcExpiration time.Duration
 }
 
-func NewRedisJWTHandler(client redis.Cmdable) *RedisJWTHandler {
+func NewRedisJWTHandler(client redis.Cmdable) Handler {
 	return &RedisJWTHandler{
 		client:        client,
 		signingMethod: jwt.SigningMethodHS512,
