@@ -194,7 +194,8 @@ func TestUserHandler_SignUp(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			userSvc, codeSvc := tc.mock(ctrl)
-			hdl := NewUserHandler(userSvc, codeSvc)
+
+			hdl := NewUserHandler(userSvc, codeSvc, nil)
 			server := gin.Default()
 			hdl.RegisterRoutes(server)
 			req := tc.reqBuilder(t)
